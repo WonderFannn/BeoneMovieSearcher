@@ -1,4 +1,4 @@
-package com.wangfan.testbeoneaidserviceapplication;
+package com.beonemoviesearcher.activity;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -66,13 +66,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        textView = (TextView) findViewById(R.id.tv_show);
+        setContentView(com.wangfan.testbeoneaidserviceapplication.R.layout.activity_main);
+        textView = (TextView) findViewById(com.wangfan.testbeoneaidserviceapplication.R.id.tv_show);
 
-//        Intent intent = new Intent("com.beoneaid.api.IBeoneAidService");
-////        startService(intent);
-//        intent.setPackage("com.wangfan.testbeoneaidserviceapplication");
-//        bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);
 
         final Intent intent = new Intent();
         intent.setAction("com.beoneaid.api.IBeoneAidService");
@@ -81,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         Log.d("TAG", "onCreate: "+((iBeoneAidService==null)?0:1));
-        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+        findViewById(com.wangfan.testbeoneaidserviceapplication.R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
