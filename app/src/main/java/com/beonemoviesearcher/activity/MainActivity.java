@@ -35,10 +35,11 @@ import java.net.URLEncoder;
 import java.util.List;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class MainActivity extends Activity {
 
-    private final String TAG = MainActivity.this.getLocalClassName();
+    private final String TAG = "MainActivity";
     /**
      *  界面控件绑定及界面相关属性
      */
@@ -76,14 +77,27 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
-
+        ButterKnife.bind(this);
         //绑定BeoneAid服务
         final Intent intent = new Intent();
         intent.setAction("com.beoneaid.api.IBeoneAidService");
         final Intent eintent = new Intent(createExplicitFromImplicitIntent(this,intent));
         bindService(eintent,serviceConnection, Service.BIND_AUTO_CREATE);
 
+        initReqQue();
 
+    }
+
+    @Override
+    protected void onStart() {
+        try {
+            if (iBeoneAidService != null){
+                iBeoneAidService.setMode(0);
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        super.onStart();
     }
 
     @Override
@@ -99,7 +113,11 @@ public class MainActivity extends Activity {
     private void praseOrderByModeMovie(String order){
         if (order.contains("播放")) {
             if (movieList == null || movieList.size() == 0) {
-//                startTtsOutput("请先搜索电影");
+                try {
+                    iBeoneAidService.startSpeaking("请先搜索电影");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             int index;
@@ -117,7 +135,11 @@ public class MainActivity extends Activity {
                 index = movListIndex;
             }
             if (index >= movieList.size()) {
-//                startTtsOutput("您说错了吧");
+                try {
+                    iBeoneAidService.startSpeaking("您说错了吧");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             String idString = movieList.get(index).getId() + "";
@@ -126,31 +148,51 @@ public class MainActivity extends Activity {
                 intent.setPackage("com.tv.kuaisou");
                 intent.putExtra("id", idString);
                 startActivity(intent);
-                // TODO: 2017/10/18 后台服务改为按键模拟模式
-//                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
+                iBeoneAidService.setMode(4);
             }catch (Exception e){
-//                startTtsOutput("没有安装影视快搜，请安装");
+                try {
+                    iBeoneAidService.startSpeaking("没有安装影视快搜，请安装");
+                } catch (RemoteException e1) {
+                    e1.printStackTrace();
+                }
             }
+
         } else if (order.indexOf("搜索") == 0) {
             String movName = order.substring(order.indexOf("搜索") + 2, order.length());
             searchMovie(movName);
         } else if (order.contains("下一") || order.contains("向后")) {
             if (movieList == null || movieList.size() == 0) {
-//                startTtsOutput("请先搜索电影");
+                try {
+                    iBeoneAidService.startSpeaking("请先搜索电影");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             movListIndex += 3;
-            showMoveResult(movieList, movListIndex);
+            showMoveResult();
         } else if (order.contains("上一") || order.contains("向前")) {
             if (movieList == null || movieList.size() == 0) {
-//                startTtsOutput("请先搜索电影");
+                try {
+                    iBeoneAidService.startSpeaking("请先搜索电影");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             movListIndex -= 3;
             if (movListIndex < 0) {
                 movListIndex = 0;
             }
-            showMoveResult(movieList, movListIndex);
+            showMoveResult();
+        } else if (order.equals("清空")){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    clearMovieShow();
+                }
+            });
+
         }
     }
 
@@ -162,7 +204,11 @@ public class MainActivity extends Activity {
             movieList.clear();
         }
         movListIndex = 0;
-//        speakText("正在为你查找《" + movName + "》相关的内容");
+        try {
+            iBeoneAidService.startSpeaking("正在为你查找《" + movName + "》相关的内容");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         String codes = null;
         try {
             codes = URLEncoder.encode(movName, "UTF-8");
@@ -175,86 +221,97 @@ public class MainActivity extends Activity {
         mQueue.add(stringRequest);
     }
 
-    private void showMoveResult(List<MovieInfo> movieList, int movListIndex) {
-        if (movieList.size() - movListIndex <= 0) {
-//            startTtsOutput("没有下一组了");
-            this.movListIndex = movListIndex - 3;
-            return;
-        }
+    private void showMoveResult() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (movieList.size() - movListIndex <= 0) {
+                    try {
+                        iBeoneAidService.startSpeaking("没有下一组了");
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    movListIndex = movListIndex - 3;
+                    return;
+                }
 //        if (speak) {
 //            startTtsOutput("现在显示第" + (movListIndex / 3 + 1) + "组结果");
 //        }
-        clearMovieShow();
-        if ((movieList.size() - movListIndex) >= 3) {
-            ll1.setVisibility(View.VISIBLE);
-            ll2.setVisibility(View.VISIBLE);
-            ll3.setVisibility(View.VISIBLE);
-            tv1.setText(movieList.get(movListIndex).getTitle());
-            tv2.setText(movieList.get(movListIndex + 1).getTitle());
-            tv3.setText(movieList.get(movListIndex + 2).getTitle());
-            ImageRequest imageRequest1 = new ImageRequest(
-                    movieList.get(movListIndex).getPic(),
-                    new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            iv1.setImageBitmap(response);
-                        }
-                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-            ImageRequest imageRequest2 = new ImageRequest(
-                    movieList.get(movListIndex + 1).getPic(),
-                    new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            iv2.setImageBitmap(response);
-                        }
-                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-            ImageRequest imageRequest3 = new ImageRequest(
-                    movieList.get(movListIndex + 2).getPic(),
-                    new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            iv3.setImageBitmap(response);
-                        }
-                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-            mQueue.add(imageRequest1);
-            mQueue.add(imageRequest2);
-            mQueue.add(imageRequest3);
-        } else if ((movieList.size() - movListIndex) == 2) {
-            ll1.setVisibility(View.VISIBLE);
-            ll3.setVisibility(View.VISIBLE);
-            tv1.setText(movieList.get(movListIndex).getTitle());
-            tv3.setText(movieList.get(movListIndex + 1).getTitle());
-            ImageRequest imageRequest1 = new ImageRequest(
-                    movieList.get(movListIndex).getPic(),
-                    new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            iv1.setImageBitmap(response);
-                        }
-                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-            ImageRequest imageRequest2 = new ImageRequest(
-                    movieList.get(movListIndex + 1).getPic(),
-                    new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            iv3.setImageBitmap(response);
-                        }
-                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-            mQueue.add(imageRequest1);
-            mQueue.add(imageRequest2);
-        } else if ((movieList.size() - movListIndex) == 1) {
-            ll2.setVisibility(View.VISIBLE);
-            tv2.setText(movieList.get(movListIndex).getTitle());
-            ImageRequest imageRequest1 = new ImageRequest(
-                    movieList.get(movListIndex).getPic(),
-                    new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            iv2.setImageBitmap(response);
-                        }
-                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-            mQueue.add(imageRequest1);
-        }
+                clearMovieShow();
+                if ((movieList.size() - movListIndex) >= 3) {
+                    ll1.setVisibility(View.VISIBLE);
+                    ll2.setVisibility(View.VISIBLE);
+                    ll3.setVisibility(View.VISIBLE);
+                    tv1.setText(movieList.get(movListIndex).getTitle());
+                    tv2.setText(movieList.get(movListIndex + 1).getTitle());
+                    tv3.setText(movieList.get(movListIndex + 2).getTitle());
+                    ImageRequest imageRequest1 = new ImageRequest(
+                            movieList.get(movListIndex).getPic(),
+                            new Response.Listener<Bitmap>() {
+                                @Override
+                                public void onResponse(Bitmap response) {
+                                    iv1.setImageBitmap(response);
+                                }
+                            }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+                    ImageRequest imageRequest2 = new ImageRequest(
+                            movieList.get(movListIndex + 1).getPic(),
+                            new Response.Listener<Bitmap>() {
+                                @Override
+                                public void onResponse(Bitmap response) {
+                                    iv2.setImageBitmap(response);
+                                }
+                            }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+                    ImageRequest imageRequest3 = new ImageRequest(
+                            movieList.get(movListIndex + 2).getPic(),
+                            new Response.Listener<Bitmap>() {
+                                @Override
+                                public void onResponse(Bitmap response) {
+                                    iv3.setImageBitmap(response);
+                                }
+                            }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+                    mQueue.add(imageRequest1);
+                    mQueue.add(imageRequest2);
+                    mQueue.add(imageRequest3);
+                } else if ((movieList.size() - movListIndex) == 2) {
+                    ll1.setVisibility(View.VISIBLE);
+                    ll3.setVisibility(View.VISIBLE);
+                    tv1.setText(movieList.get(movListIndex).getTitle());
+                    tv3.setText(movieList.get(movListIndex + 1).getTitle());
+                    ImageRequest imageRequest1 = new ImageRequest(
+                            movieList.get(movListIndex).getPic(),
+                            new Response.Listener<Bitmap>() {
+                                @Override
+                                public void onResponse(Bitmap response) {
+                                    iv1.setImageBitmap(response);
+                                }
+                            }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+                    ImageRequest imageRequest2 = new ImageRequest(
+                            movieList.get(movListIndex + 1).getPic(),
+                            new Response.Listener<Bitmap>() {
+                                @Override
+                                public void onResponse(Bitmap response) {
+                                    iv3.setImageBitmap(response);
+                                }
+                            }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+                    mQueue.add(imageRequest1);
+                    mQueue.add(imageRequest2);
+                } else if ((movieList.size() - movListIndex) == 1) {
+                    ll2.setVisibility(View.VISIBLE);
+                    tv2.setText(movieList.get(movListIndex).getTitle());
+                    ImageRequest imageRequest1 = new ImageRequest(
+                            movieList.get(movListIndex).getPic(),
+                            new Response.Listener<Bitmap>() {
+                                @Override
+                                public void onResponse(Bitmap response) {
+                                    iv2.setImageBitmap(response);
+                                }
+                            }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+                    mQueue.add(imageRequest1);
+                }
+            }
+        });
+
+
     }
 
     private void clearMovieShow() {
@@ -278,16 +335,15 @@ public class MainActivity extends Activity {
             Log.d(TAG, "onResponse: " + response.toString());
             movieList = JsonParser.parseMovieResult(response);
             if (movieList != null) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (movieList.size() > 0) {
-                            showMoveResult(movieList, movListIndex);
-                        } else {
-//                            speakText("没有搜索到结果，请重新搜索 ");
-                        }
+                if (movieList.size() > 0) {
+                    showMoveResult();
+                } else {
+                    try {
+                        iBeoneAidService.startSpeaking("没有搜索到结果，请重新搜索 ");
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
                     }
-                });
+                }
             }
         }
     };
@@ -295,6 +351,7 @@ public class MainActivity extends Activity {
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
+            Log.d(TAG, "onErrorResponse: "+error.getMessage());
         }
     };
      /**
@@ -304,7 +361,7 @@ public class MainActivity extends Activity {
     private IBeoneAidServiceCallback iBeoneAidServiceCallback = new IBeoneAidServiceCallback.Stub() {
         @Override
         public void recognizeResultCallback(final String s) throws RemoteException {
-            // TODO: 2017/10/18 语音命令识别后的回调，这是子线程
+            praseOrderByModeMovie(s);
         }
     };
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -321,12 +378,9 @@ public class MainActivity extends Activity {
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            try {
-                iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
+//                iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
                 iBeoneAidService = null;
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
+
         }
     };
     //将隐式启动变成显式启动，Andriod5.0后必须使用这个方法
