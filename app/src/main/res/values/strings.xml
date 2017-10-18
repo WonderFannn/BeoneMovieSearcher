@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Beone影视搜索</string>
+    <string name="search_movie_url">http://open.tvapk.com/fastsou/vdsou?sokey=</string>
 </resources>
