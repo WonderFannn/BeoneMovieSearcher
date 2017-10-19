@@ -90,13 +90,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onStart() {
-        try {
-            if (iBeoneAidService != null){
-                iBeoneAidService.setMode(0);
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        serviceSetMode(0);
         super.onStart();
     }
 
@@ -113,11 +107,7 @@ public class MainActivity extends Activity {
     private void praseOrderByModeMovie(String order){
         if (order.contains("播放")) {
             if (movieList == null || movieList.size() == 0) {
-                try {
-                    iBeoneAidService.startSpeaking("请先搜索电影");
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                serviceSpeaking("请先搜索电影");
                 return;
             }
             int index;
@@ -135,11 +125,7 @@ public class MainActivity extends Activity {
                 index = movListIndex;
             }
             if (index >= movieList.size()) {
-                try {
-                    iBeoneAidService.startSpeaking("您说错了吧");
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                serviceSpeaking("您说错了吧");
                 return;
             }
             String idString = movieList.get(index).getId() + "";
@@ -148,13 +134,9 @@ public class MainActivity extends Activity {
                 intent.setPackage("com.tv.kuaisou");
                 intent.putExtra("id", idString);
                 startActivity(intent);
-                iBeoneAidService.setMode(4);
+                serviceSetMode(4);
             }catch (Exception e){
-                try {
-                    iBeoneAidService.startSpeaking("没有安装影视快搜，请安装");
-                } catch (RemoteException e1) {
-                    e1.printStackTrace();
-                }
+                serviceSpeaking("没有安装影视快搜，请安装");
             }
 
         } else if (order.indexOf("搜索") == 0) {
@@ -162,22 +144,14 @@ public class MainActivity extends Activity {
             searchMovie(movName);
         } else if (order.contains("下一") || order.contains("向后")) {
             if (movieList == null || movieList.size() == 0) {
-                try {
-                    iBeoneAidService.startSpeaking("请先搜索电影");
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                serviceSpeaking("请先搜索电影");
                 return;
             }
             movListIndex += 3;
             showMoveResult();
         } else if (order.contains("上一") || order.contains("向前")) {
             if (movieList == null || movieList.size() == 0) {
-                try {
-                    iBeoneAidService.startSpeaking("请先搜索电影");
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                serviceSpeaking("请先搜索电影");
                 return;
             }
             movListIndex -= 3;
@@ -204,11 +178,7 @@ public class MainActivity extends Activity {
             movieList.clear();
         }
         movListIndex = 0;
-        try {
-            iBeoneAidService.startSpeaking("正在为你查找《" + movName + "》相关的内容");
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        serviceSpeaking("正在为你查找《" + movName + "》相关的内容");
         String codes = null;
         try {
             codes = URLEncoder.encode(movName, "UTF-8");
@@ -226,11 +196,7 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 if (movieList.size() - movListIndex <= 0) {
-                    try {
-                        iBeoneAidService.startSpeaking("没有下一组了");
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
+                    serviceSpeaking("没有下一组了");
                     movListIndex = movListIndex - 3;
                     return;
                 }
@@ -338,11 +304,7 @@ public class MainActivity extends Activity {
                 if (movieList.size() > 0) {
                     showMoveResult();
                 } else {
-                    try {
-                        iBeoneAidService.startSpeaking("没有搜索到结果，请重新搜索 ");
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
+                    serviceSpeaking("没有搜索到结果，请重新搜索 ");
                 }
             }
         }
@@ -378,8 +340,8 @@ public class MainActivity extends Activity {
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-//                iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
-                iBeoneAidService = null;
+            iBeoneAidService = null;
+            Log.e(TAG, "onServiceDisconnected: 服务断开了" );
 
         }
     };
@@ -402,5 +364,32 @@ public class MainActivity extends Activity {
         // Set the component to be explicit
         explicitIntent.setComponent(component);
         return explicitIntent;
+    }
+    /**
+     *  远程服务api
+     */
+
+    private void serviceSpeaking(String text){
+        if (iBeoneAidService != null){
+            try {
+                iBeoneAidService.startSpeaking(text);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }else {
+            Log.e(TAG, "serviceSpeaking: service is null");
+        }
+    }
+
+    private void serviceSetMode(int mode){
+        if (iBeoneAidService != null){
+            try {
+                iBeoneAidService.setMode(mode);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }else {
+            Log.e(TAG, "serviceSetMode: service is null");
+        }
     }
 }
