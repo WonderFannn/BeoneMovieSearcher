@@ -3,7 +3,7 @@
     package="com.beonemoviesearcher"
     android:installLocation="auto"
     android:versionCode="1"
-    android:versionName="0.1.1019">
+    android:versionName="0.1.1021">
 
     <application
         android:name=".application.BaseApplication"
