@@ -93,6 +93,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        try {
+            iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         unbindService(serviceConnection);
         serviceConnection = null;
         super.onDestroy();
