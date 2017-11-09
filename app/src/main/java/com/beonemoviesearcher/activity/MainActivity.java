@@ -76,10 +76,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_activity);
         ButterKnife.bind(this);
         //绑定BeoneAid服务
-        final Intent intent = new Intent();
-        intent.setAction("com.beoneaid.api.IBeoneAidService");
-        intent.setPackage("com.jinxin.beoneaid");
-        bindService(intent,serviceConnection, Service.BIND_AUTO_CREATE);
 
         initReqQue();
 
@@ -87,19 +83,27 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onStart() {
-        serviceSetMode(0);
+        final Intent intent = new Intent();
+        intent.setAction("com.beoneaid.api.IBeoneAidService");
+        intent.setPackage("com.jinxin.beoneaid");
+        bindService(intent,serviceConnection, Service.BIND_AUTO_CREATE);
         super.onStart();
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onStop() {
         try {
             iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         unbindService(serviceConnection);
-        serviceConnection = null;
+        iBeoneAidService = null;
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
         super.onDestroy();
     }
     /**
