@@ -208,6 +208,7 @@ public class CheckVersionTask {
                     Log.i(TAG, "版本号相同无需升级");
                     //LoginMain();
                 } else {
+                    Log.d(TAG, "apkver="+versionname+"；平台="+info.getAppVersion());
                     Log.i(TAG, "版本号不同 ,提示用户升级 ");
                     Message msg = new Message();
                     msg.what = UPDATA_CLIENT;
