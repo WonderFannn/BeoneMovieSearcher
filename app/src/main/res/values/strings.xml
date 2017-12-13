@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Beone影视搜索</string>
     <string name="search_movie_url">http://open.tvapk.com/fastsou/vdsou?sokey=</string>
+    <string name="beone_aiui_url">http://www.beonehome.com:6100/smarthome/mobile/service?$data=</string>
 </resources>
