@@ -241,12 +241,15 @@ public class CheckVersionTask {
                 downLoadApk(context);
             }
         });
-        builer.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                //LoginMain();
-            }
-        });
+        if(info.getStatus() == 2){
+
+        }else {
+            builer.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    // TODO Auto-generated method stub
+                }
+            });
+        }
         AlertDialog dialog = builer.create();
 //        dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
         dialog.show();

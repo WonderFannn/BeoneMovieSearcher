@@ -2,4 +2,9 @@
     <string name="app_name">Beone影视搜索</string>
     <string name="search_movie_url">http://open.tvapk.com/fastsou/vdsou?sokey=</string>
     <string name="beone_aiui_url">http://www.beonehome.com:6100/smarthome/mobile/service?$data=</string>
+
+
+    <string name="aiqiyi_signature">b1kp7o5cmnhphomuv80uycdtr8mp958motmomfdocdoayvrv</string>
+    <string name="aiqiyi_packagename">com.qiyi.video.jinxinzhihui</string>
+    <string name="access_description" />
 </resources>

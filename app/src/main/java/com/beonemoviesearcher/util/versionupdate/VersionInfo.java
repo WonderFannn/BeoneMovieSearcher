@@ -133,4 +133,7 @@ public class VersionInfo implements Serializable {
     public void setAppSize(int appSize) {
         this.appSize = appSize;
     }
+
+
+
 }

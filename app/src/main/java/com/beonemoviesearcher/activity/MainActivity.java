@@ -1,7 +1,6 @@
 package com.beonemoviesearcher.activity;
 
 import android.app.Activity;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -26,11 +25,14 @@ import com.beoneaid.api.IBeoneAidService;
 import com.beoneaid.api.IBeoneAidServiceCallback;
 import com.beonemoviesearcher.R;
 import com.beonemoviesearcher.dao.MovieInfo;
+import com.beonemoviesearcher.service.BeoneAiqiyiService;
 import com.beonemoviesearcher.util.GetMacUtil;
 import com.beonemoviesearcher.util.JsonParser;
 import com.beonemoviesearcher.util.versionupdate.CheckVersionTask;
 import com.beonemoviesearcher.util.versionupdate.IParse;
 import com.beonemoviesearcher.util.versionupdate.VersionInfo;
+import com.gala.tv.voice.VoiceClient;
+import com.qiyi.tv.client.QiyiClient;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -76,6 +78,9 @@ public class MainActivity extends Activity {
     private List<MovieInfo> movieList;
     private int movListIndex = 0;
 
+    private QiyiClient mQiyiClient;
+
+    private VoiceClient mVoiceClient;
     /**
      *  生命周期
      */
@@ -85,32 +90,38 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
         ButterKnife.bind(this);
-        //绑定BeoneAid服务
 
         initReqQue();
         initMac();
         loginBeone();
 
+        Intent intent = new Intent(this, BeoneAiqiyiService.class);
+        startService(intent);
+
     }
+
 
     @Override
     protected void onStart() {
+        //绑定BeoneAid服务
         final Intent intent = new Intent();
         intent.setAction("com.beoneaid.api.IBeoneAidService");
         intent.setPackage("com.jinxin.beoneaid");
-        bindService(intent,serviceConnection, Service.BIND_AUTO_CREATE);
+//        bindService(intent,serviceConnection, Service.BIND_AUTO_CREATE);
+
+
         super.onStart();
     }
 
     @Override
     protected void onStop() {
-        try {
-            iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        unbindService(serviceConnection);
-        iBeoneAidService = null;
+//        try {
+//            iBeoneAidService.unregisterCallback(iBeoneAidServiceCallback);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        }
+//        unbindService(serviceConnection);
+//        iBeoneAidService = null;
         super.onStop();
     }
 
